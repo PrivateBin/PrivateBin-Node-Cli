@@ -15,13 +15,6 @@
 
 'use strict';
 
-// enforce presence of one argument
-if (!process.argv[2])
-{
-    console.error('Usage: ./privatebin.js <path to text file> [optional password] [optional PrivateBin FQDN]');
-    process.exit(1);
-}
-
 global.sjcl = require('./sjcl-1.0.6');
 var password = process.argv[3] || '',
     privatebinHost = process.argv[4] || 'privatebin.net',
@@ -32,9 +25,8 @@ var password = process.argv[3] || '',
     format = 'plaintext',
     burnafterreading = 1,
     opendiscussion = 0,
-    fs = require('fs'),
-    querystring = require('querystring'),
-    http = require(privatebinProtocol),
+
+    usage = 'Usage: ./privatebin.js <path to text file> [optional password] [optional PrivateBin FQDN]',
     base64env = require('./base64-2.1.9'),
     rawenv = require('./rawdeflate-0.5'),
     Base64 = base64env.Base64,
@@ -95,18 +87,22 @@ var controller = {
      * @name   controller.sendData
      * @function
      * @param  {String} data
+     * @param  {String} prefix
+     * @param  {String} source
      */
-    sendData: function(data)
+    sendData: function(data, prefix, source)
     {
         // do not send if no data.
         if (data.length === 0)
         {
-            return;
+            console.error('Error reading ' + source);
+            console.error(usage);
+            process.exit(2);
         }
 
         var randomkey = sjcl.codec.base64.fromBits(sjcl.random.randomWords(8, 0), 0),
             cipherdata = filter.cipher(randomkey, password, data),
-            data_to_send = querystring.stringify({
+            data_to_send = require('querystring').stringify({
                 data:             cipherdata,
                 expire:           expiration,
                 formatter:        format,
@@ -124,7 +120,7 @@ var controller = {
                     'X-Requested-With': 'JSONHttpRequest'
                 }
             },
-            request = http.request(options, function(res) {
+            request = require(privatebinProtocol).request(options, function(res) {
                 var responseString = '';
                 res.setEncoding('utf8');
                 res.on('data', function (data) {
@@ -162,17 +158,43 @@ var controller = {
             process.exit(5);
         });
 
+        console.log('Sending content ' + prefix + ' ' + source + '…');
         request.write(data_to_send);
         request.end();
     }
 };
 
-// try to open file for reading, naively loading it all into memory
-fs.readFile(process.argv[2], function (err, data) {
-    if (err) {
-        console.error(err.toString());
-        process.exit(2);
-    }
-    console.log('Sending content of file "' + process.argv[2] + '"…');
-    controller.sendData(data.toString());
-});
+// help message
+if (process.argv.length > 2 && (process.argv[2] === '--help' || process.argv[2] === '-h'))
+{
+    console.error(usage);
+    process.exit(1);
+}
+
+// try to read file or STDIN, naively loading it all into memory
+var input = '';
+if (process.argv.length > 2 && process.argv[2] !== '-') {
+    var file = require('fs').createReadStream(process.argv[2]);
+
+    file.on('data', function(data) {
+        input += data;
+    });
+
+    file.on('end', function() {
+        controller.sendData(input, 'of', 'file "' + process.argv[2] + '"');
+    });
+} else {
+    process.stdin.setEncoding('utf8');
+
+    process.stdin.on('readable', function() {
+        const chunk = process.stdin.read();
+        if (chunk !== null) {
+            input += chunk;
+        }
+    });
+
+    process.stdin.on('end', function() {
+        controller.sendData(input, 'read', 'from STDIN');
+    });
+}
+
