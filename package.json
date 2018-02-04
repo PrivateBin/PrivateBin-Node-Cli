@@ -13,8 +13,8 @@
     "type": "git",
     "url": "git+https://github.com/PrivateBin/PrivateBin-Cli.git"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Simon Rupf",
+  "license": "zlib-acknowledgement",
   "bugs": {
     "url": "https://github.com/PrivateBin/PrivateBin-Cli/issues"
   },
