@@ -15,7 +15,6 @@
 
 'use strict';
 
-global.sjcl = require('./sjcl-1.0.6');
 var password = process.argv[3] || '',
     privatebinHost = process.argv[4] || 'privatebin.net',
     privatebinProtocol = 'https',
@@ -27,10 +26,9 @@ var password = process.argv[3] || '',
     opendiscussion = 0,
 
     usage = 'Usage: ./privatebin.js <path to text file> [optional password] [optional PrivateBin FQDN]',
-    base64env = require('./base64-2.1.9'),
-    rawenv = require('./rawdeflate-0.5'),
-    Base64 = base64env.Base64,
-    RawDeflate = rawenv.RawDeflate;
+    Base64 = require('js-base64').Base64,
+    pako = require('pako'),
+    sjcl = require('sjcl');
 
 /**
  * filter methods
@@ -49,7 +47,7 @@ var filter = {
      */
     compress: function(message)
     {
-        return Base64.toBase64( RawDeflate.deflate( Base64.utob(message) ) );
+        return Base64.toBase64( pako.deflateRaw( message, { to: 'string' } ) );
     },
 
     /**

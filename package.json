@@ -3,11 +3,11 @@
   "version": "1.0.1",
   "description": "**PrivateBin** is a minimalist, open source online pastebin where the server has zero knowledge of pasted data.",
   "main": "privatebin.js",
-	"bin": {
-		"privatebin": "./privatebin.js"
-	},
+  "bin": {
+    "privatebin": "./privatebin.js"
+  },
   "scripts": {
-   	"start": "./privatebin.js"
+    "start": "./privatebin.js"
   },
   "repository": {
     "type": "git",
@@ -18,5 +18,10 @@
   "bugs": {
     "url": "https://github.com/PrivateBin/PrivateBin-Cli/issues"
   },
-  "homepage": "https://github.com/PrivateBin/PrivateBin-Cli#readme"
+  "homepage": "https://github.com/PrivateBin/PrivateBin-Cli#readme",
+  "dependencies": {
+    "js-base64": "2.1.9",
+    "pako": "^1.0.6",
+    "sjcl": "1.0.6"
+  }
 }
